@@ -1,0 +1,79 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+
+    <style>
+      #toneSelector {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 9999;
+        background: rgba(0,0,0,0.7);
+        padding: 8px 12px;
+        border-radius: 6px;
+        color: white;
+        font-family: sans-serif;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Tone Switch UI -->
+    <select id="toneSelector">
+      <option value="hype">🔥 Hype</option>
+      <option value="calm">🌙 Calm</option>
+      <option value="analyst">📊 Analyst</option>
+    </select>
+
+    <!-- A-Frame VR Scene -->
+    <a-scene>
+      <!-- 360 video source (outside scene for better control) -->
+      <a-assets>
+        <video id="v360" src="video360.mp4" autoplay loop crossorigin="anonymous" playsinline muted></video>
+      </a-assets>
+
+      <!-- 360 video sphere -->
+      <a-videosphere src="#v360"></a-videosphere>
+
+      <!-- Camera with device orientation controls -->
+      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: true; mouseEnabled: true"></a-entity>
+
+    </a-scene>
+
+    <script>
+      // Tone selector UI is kept for future soundtrack integration
+      document.getElementById('toneSelector').addEventListener('change', (e) => {
+        console.log('Selected tone:', e.target.value);
+        // Audio playback will be implemented when soundtracks are available
+      });
+
+      // Ensure video plays
+      const video = document.getElementById('v360');
+      
+      // Try to play video when scene is loaded
+      document.querySelector('a-scene').addEventListener('loaded', () => {
+        video.play().catch(e => {
+          console.log('Autoplay prevented, click to start video');
+        });
+      });
+
+      // Click anywhere to start video if autoplay fails
+      document.body.addEventListener('click', () => {
+        if (video.paused) {
+          video.play();
+        }
+      }, { once: true });
+
+      // Debug: check if video is loading
+      video.addEventListener('loadeddata', () => {
+        console.log('Video loaded successfully');
+      });
+      
+      video.addEventListener('error', (e) => {
+        console.error('Video error:', e);
+      });
+    </script>
+
+  </body>
+</html>
