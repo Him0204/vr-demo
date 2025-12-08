@@ -21,6 +21,38 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         min-width: 260px;
         backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+      }
+
+      #controlPanel.minimized {
+        min-width: auto;
+        padding: 12px;
+      }
+
+      #controlPanel.minimized .panel-content {
+        display: none;
+      }
+
+      #togglePanel {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+
+      #togglePanel:hover {
+        background: rgba(255, 255, 255, 0.2);
       }
 
       #controlPanel h3 {
@@ -123,26 +155,29 @@
   <body>
     <!-- Control Panel -->
     <div id="controlPanel">
-      <h3>🎮 VR Controls</h3>
-      
-      <div class="control-group">
-        <label>🎬 Video Source</label>
-        <select id="videoSelector">
-          <option value="video360.mp4">Video 360 v1</option>
-          <option value="video360v2.mp4" selected>Video 360 v2</option>
-        </select>
-      </div>
+      <button id="togglePanel" title="Minimize/Expand">−</button>
+      <div class="panel-content">
+        <h3>🎮 VR Controls</h3>
+        
+        <div class="control-group">
+          <label>🎬 Video Source</label>
+          <select id="videoSelector">
+            <option value="video360.mp4">Video 360 v1</option>
+            <option value="video360v2.mp4" selected>Video 360 v2</option>
+          </select>
+        </div>
 
-      <div class="control-group">
-        <label>🎙️ Commentary Voice</label>
-        <select id="toneSelector">
-          <option value="female">👩 Woman</option>
-          <option value="male">👨 Man</option>
-        </select>
-      </div>
+        <div class="control-group">
+          <label>🎙️ Commentary Voice</label>
+          <select id="toneSelector">
+            <option value="female">👩 Woman</option>
+            <option value="male">👨 Man</option>
+          </select>
+        </div>
 
-      <div class="control-group">
-        <button id="commentaryToggle">▶️ Play Commentary</button>
+        <div class="control-group">
+          <button id="commentaryToggle">▶️ Play Commentary</button>
+        </div>
       </div>
     </div>
 
@@ -164,6 +199,25 @@
     </a-scene>
 
     <script>
+      // Control panel toggle
+      const controlPanel = document.getElementById('controlPanel');
+      const togglePanelBtn = document.getElementById('togglePanel');
+      let panelMinimized = false;
+
+      togglePanelBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        panelMinimized = !panelMinimized;
+        if (panelMinimized) {
+          controlPanel.classList.add('minimized');
+          togglePanelBtn.textContent = '+';
+          togglePanelBtn.title = 'Expand';
+        } else {
+          controlPanel.classList.remove('minimized');
+          togglePanelBtn.textContent = '−';
+          togglePanelBtn.title = 'Minimize';
+        }
+      });
+
       // Tone selector now chooses commentary track (man / woman)
       const toneSelector = document.getElementById('toneSelector');
 
@@ -294,12 +348,26 @@
       });
 
       // Auto-start commentary (default woman) once video begins playing
-      video.addEventListener('playing', () => {
-        if (!commentaryOn) {
-          // Default tone is woman; will switch to man if selector is changed
+      let autoPlayAttempted = false;
+      
+      const tryAutoStartCommentary = () => {
+        if (!commentaryOn && !autoPlayAttempted) {
+          autoPlayAttempted = true;
           startCommentary();
         }
-      });
+      };
+      
+      video.addEventListener('playing', tryAutoStartCommentary);
+      
+      // Ensure audio starts on first user interaction (mobile requirement)
+      const firstInteraction = () => {
+        tryAutoStartCommentary();
+        document.removeEventListener('click', firstInteraction);
+        document.removeEventListener('touchstart', firstInteraction);
+      };
+      
+      document.addEventListener('click', firstInteraction, { once: true });
+      document.addEventListener('touchstart', firstInteraction, { once: true });
     </script>
 
   </body>
