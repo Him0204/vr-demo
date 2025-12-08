@@ -30,30 +30,20 @@
         gap: 8px;
         align-items: center;
       }
-
-      #commentaryControls label {
-        font-size: 12px;
-        opacity: 0.8;
-      }
     </style>
   </head>
 
   <body>
     <!-- Tone Switch UI -->
     <select id="toneSelector">
-      <option value="hype">🔥 Hype</option>
-      <option value="calm">🌙 Calm</option>
-      <option value="analyst">📊 Analyst</option>
+      <option value="female">Woman</option>
+      <option value="male">Man</option>
     </select>
 
     <!-- Commentator voice controls -->
     <div id="commentaryControls">
-      <label for="voiceSelector">Voice</label>
-      <select id="voiceSelector">
-        <option value="female">Woman</option>
-        <option value="male">Man</option>
-      </select>
       <button id="commentaryToggle">Play Commentary</button>
+      <span style="font-size:12px; opacity:0.8;">Tone uses selected voice</span>
     </div>
 
     <!-- A-Frame VR Scene -->
@@ -61,6 +51,8 @@
       <!-- 360 video source (outside scene for better control) -->
       <a-assets>
         <video id="v360" src="video360v2.mp4" autoplay loop crossorigin="anonymous" playsinline muted></video>
+        <audio id="commentaryMale" src="man.mp3" preload="auto"></audio>
+        <audio id="commentaryFemale" src="woman.mp3" preload="auto"></audio>
       </a-assets>
 
       <!-- 360 video sphere -->
@@ -72,11 +64,8 @@
     </a-scene>
 
     <script>
-      // Tone selector UI is kept for future soundtrack integration
-      document.getElementById('toneSelector').addEventListener('change', (e) => {
-        console.log('Selected tone:', e.target.value);
-        // Audio playback will be implemented when soundtracks are available
-      });
+      // Tone selector now chooses commentary track (man / woman)
+      const toneSelector = document.getElementById('toneSelector');
 
       // Ensure video plays
       const video = document.getElementById('v360');
@@ -111,66 +100,55 @@
         console.error('Video error:', e);
       });
 
-      // Commentator voice (man / woman) via Web Speech API
-      const voiceSelector = document.getElementById('voiceSelector');
+      // Commentator audio (man / woman) via MP3 tracks
       const commentaryToggle = document.getElementById('commentaryToggle');
-      let availableVoices = [];
+      const maleAudio = document.getElementById('commentaryMale');
+      const femaleAudio = document.getElementById('commentaryFemale');
+      const commentaryTracks = {
+        male: maleAudio,
+        female: femaleAudio,
+      };
+
+      Object.values(commentaryTracks).forEach(track => {
+        track.loop = true;
+        track.playbackRate = 1;
+        track.addEventListener('ratechange', () => {
+          if (track.playbackRate !== 1) track.playbackRate = 1;
+        });
+      });
+
       let commentaryOn = false;
-      let speakingUtterance = null;
 
-      const refreshVoices = () => {
-        availableVoices = window.speechSynthesis.getVoices();
+      const stopAllCommentary = () => {
+        Object.values(commentaryTracks).forEach(track => {
+          track.pause();
+          track.currentTime = 0;
+        });
       };
 
-      refreshVoices();
-      window.speechSynthesis.onvoiceschanged = refreshVoices;
-
-      const pickVoice = (gender) => {
-        // Heuristic: prefer voice names that hint at gender, else fallback to first
-        const lower = gender.toLowerCase();
-        const prioritized = availableVoices.find(v => v.name.toLowerCase().includes(lower))
-          || availableVoices.find(v => v.name.toLowerCase().includes('female') && gender === 'female')
-          || availableVoices.find(v => v.name.toLowerCase().includes('male') && gender === 'male')
-          || availableVoices[0];
-        return prioritized || null;
-      };
-
-      const toneLines = {
-        hype: 'What a moment! The crowd is electric as the play unfolds!',
-        calm: 'Smooth and steady pace, every move measured and in control.',
-        analyst: 'Notice the positioning here: spacing is tight, timing is perfect.',
-      };
-
-      const speakCommentary = () => {
-        window.speechSynthesis.cancel();
-        speakingUtterance = new SpeechSynthesisUtterance();
-        const tone = document.getElementById('toneSelector').value;
-        speakingUtterance.text = toneLines[tone] || toneLines.hype;
-        speakingUtterance.rate = 1;
-        speakingUtterance.pitch = 1;
-        speakingUtterance.volume = 1;
-        const chosenVoice = pickVoice(voiceSelector.value);
-        if (chosenVoice) {
-          speakingUtterance.voice = chosenVoice;
+      const playSelectedCommentary = () => {
+        stopAllCommentary();
+        const selected = toneSelector.value;
+        const track = commentaryTracks[selected];
+        if (track) {
+          track.play().catch(err => console.warn('Commentary play blocked:', err));
         }
-        window.speechSynthesis.speak(speakingUtterance);
       };
 
       commentaryToggle.addEventListener('click', () => {
         commentaryOn = !commentaryOn;
         if (commentaryOn) {
           commentaryToggle.textContent = 'Stop Commentary';
-          speakCommentary();
+          playSelectedCommentary();
         } else {
           commentaryToggle.textContent = 'Play Commentary';
-          window.speechSynthesis.cancel();
+          stopAllCommentary();
         }
       });
 
-      // Re-speak when a speech event ends while still toggled on
-      window.speechSynthesis.addEventListener('end', () => {
+      toneSelector.addEventListener('change', () => {
         if (commentaryOn) {
-          speakCommentary();
+          playSelectedCommentary();
         }
       });
     </script>
