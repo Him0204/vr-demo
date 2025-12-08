@@ -4,108 +4,146 @@
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
 
     <style>
-      #toneSelector {
-        position: absolute;
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+
+      #controlPanel {
+        position: fixed;
         top: 20px;
         left: 20px;
         z-index: 9999;
-        background: rgba(0,0,0,0.7);
-        padding: 8px 12px;
-        border-radius: 6px;
-        color: white;
-        font-family: sans-serif;
-      }
-
-      #videoSelector {
-        position: absolute;
-        top: 120px;
-        left: 20px;
-        z-index: 9999;
-        background: rgba(0,0,0,0.7);
-        padding: 8px 12px;
-        border-radius: 6px;
-        color: white;
-        font-family: sans-serif;
-      }
-
-      #commentaryControls {
-        position: absolute;
-        top: 70px;
-        left: 20px;
-        z-index: 9999;
-        background: rgba(0,0,0,0.7);
-        padding: 8px 12px;
-        border-radius: 6px;
-        color: white;
-        font-family: sans-serif;
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
-
-      #audioPrompt {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.85);
-        z-index: 99999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        color: white;
-        font-family: sans-serif;
-        text-align: center;
+        background: rgba(0, 0, 0, 0.85);
         padding: 20px;
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        min-width: 260px;
+        backdrop-filter: blur(10px);
       }
 
-      #audioPrompt button {
-        margin-top: 20px;
-        padding: 15px 30px;
-        font-size: 18px;
-        background: #4CAF50;
+      #controlPanel h3 {
+        margin: 0 0 15px 0;
+        font-size: 16px;
+        font-weight: 600;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        padding-bottom: 10px;
+      }
+
+      .control-group {
+        margin-bottom: 15px;
+      }
+
+      .control-group:last-child {
+        margin-bottom: 0;
+      }
+
+      .control-group label {
+        display: block;
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 6px;
+        color: rgba(255, 255, 255, 0.8);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .control-group select {
+        width: 100%;
+        padding: 10px 12px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
         color: white;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .control-group select:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      .control-group select:focus {
+        outline: none;
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+      }
+
+      .control-group button {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
         border-radius: 8px;
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
         cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
       }
 
-      #audioPrompt button:hover {
-        background: #45a049;
+      .control-group button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
       }
 
-      .hidden {
-        display: none !important;
+      .control-group button:active {
+        transform: translateY(0);
+      }
+
+      .control-group button.active {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      }
+
+      @media (max-width: 768px) {
+        #controlPanel {
+          top: 10px;
+          left: 10px;
+          right: 10px;
+          min-width: auto;
+          padding: 15px;
+        }
+
+        #controlPanel h3 {
+          font-size: 14px;
+        }
+
+        .control-group select,
+        .control-group button {
+          font-size: 13px;
+        }
       }
     </style>
   </head>
 
   <body>
-    <!-- Tone Switch UI -->
-    <select id="toneSelector">
-      <option value="female">Woman</option>
-      <option value="male">Man</option>
-    </select>
+    <!-- Control Panel -->
+    <div id="controlPanel">
+      <h3>🎮 VR Controls</h3>
+      
+      <div class="control-group">
+        <label>🎬 Video Source</label>
+        <select id="videoSelector">
+          <option value="video360.mp4">Video 360 v1</option>
+          <option value="video360v2.mp4" selected>Video 360 v2</option>
+        </select>
+      </div>
 
-    <!-- Video source selector -->
-    <select id="videoSelector">
-      <option value="video360.mp4">Video 360 v1</option>
-      <option value="video360v2.mp4" selected>Video 360 v2</option>
-    </select>
+      <div class="control-group">
+        <label>🎙️ Commentary Voice</label>
+        <select id="toneSelector">
+          <option value="female">👩 Woman</option>
+          <option value="male">👨 Man</option>
+        </select>
+      </div>
 
-    <!-- Commentator voice controls -->
-    <div id="commentaryControls">
-      <button id="commentaryToggle">Play Commentary</button>
-      <span style="font-size:12px; opacity:0.8;">Tone uses selected voice</span>
-    </div>
-
-    <!-- Audio unlock prompt -->
-    <div id="audioPrompt">
-      <h2>🔊 Enable Audio</h2>
-      <p>Tap to unlock audio and start commentary</p>
-      <button id="unlockButton">Enable Sound</button>
+      <div class="control-group">
+        <button id="commentaryToggle">▶️ Play Commentary</button>
+      </div>
     </div>
 
     <!-- A-Frame VR Scene -->
@@ -175,50 +213,6 @@
         female: femaleAudio,
       };
 
-      // Audio unlock handling for mobile (iOS/Android)
-      let audioUnlocked = false;
-      let pendingAutoCommentary = false;
-      const audioPrompt = document.getElementById('audioPrompt');
-      const unlockButton = document.getElementById('unlockButton');
-
-      const unlockAudio = () => {
-        console.log('Attempting to unlock audio...');
-        console.log('Available tracks:', Object.keys(commentaryTracks));
-        
-        const promises = Object.values(commentaryTracks).map(track => {
-          console.log('Track ready state:', track.readyState, 'src:', track.src);
-          return track.play().then(() => {
-            console.log('Track played successfully:', track.src);
-            track.pause();
-            track.currentTime = 0;
-            return true;
-          }).catch(err => {
-            console.error('Audio unlock failed for', track.src, ':', err);
-            return false;
-          });
-        });
-        
-        Promise.all(promises).then((results) => {
-          audioUnlocked = results.some(r => r === true);
-          console.log('Audio unlock results:', results, 'audioUnlocked:', audioUnlocked);
-          audioPrompt.classList.add('hidden');
-          
-          if (audioUnlocked) {
-            console.log('Audio unlocked successfully');
-            if (pendingAutoCommentary) {
-              pendingAutoCommentary = false;
-              console.log('Starting pending commentary...');
-              startCommentary();
-            }
-          } else {
-            console.error('All audio tracks failed to unlock. Check file paths and browser console.');
-            alert('Audio files not found. Ensure man.mp3 and woman.mp3 are in the same directory as index.html');
-          }
-        });
-      };
-
-      unlockButton.addEventListener('click', unlockAudio);
-      
       // Debug: Check if audio files are loading
       Object.entries(commentaryTracks).forEach(([name, track]) => {
         track.addEventListener('loadeddata', () => {
@@ -275,21 +269,20 @@
 
       const startCommentary = () => {
         commentaryOn = true;
-        commentaryToggle.textContent = 'Stop Commentary';
-        if (audioUnlocked) {
-          playSelectedCommentary();
-        } else {
-          pendingAutoCommentary = true;
-        }
+        commentaryToggle.textContent = '⏸️ Stop Commentary';
+        commentaryToggle.classList.add('active');
+        playSelectedCommentary();
       };
 
       commentaryToggle.addEventListener('click', () => {
         commentaryOn = !commentaryOn;
         if (commentaryOn) {
-          commentaryToggle.textContent = 'Stop Commentary';
+          commentaryToggle.textContent = '⏸️ Stop Commentary';
+          commentaryToggle.classList.add('active');
           playSelectedCommentary();
         } else {
-          commentaryToggle.textContent = 'Play Commentary';
+          commentaryToggle.textContent = '▶️ Play Commentary';
+          commentaryToggle.classList.remove('active');
           stopAllCommentary();
         }
       });
@@ -304,14 +297,6 @@
       video.addEventListener('playing', () => {
         if (!commentaryOn) {
           // Default tone is woman; will switch to man if selector is changed
-          startCommentary();
-        }
-      });
-
-      // If user taps after video already playing, ensure commentary starts once unlocked
-      document.body.addEventListener('pointerdown', () => {
-        if (pendingAutoCommentary && audioUnlocked) {
-          pendingAutoCommentary = false;
           startCommentary();
         }
       });
