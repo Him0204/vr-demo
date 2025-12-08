@@ -186,8 +186,10 @@
       <!-- 360 video source (outside scene for better control) -->
       <a-assets>
         <video id="v360" src="video360v2.mp4" autoplay loop crossorigin="anonymous" playsinline muted></video>
-        <audio id="commentaryMale" src="Man.mp3" preload="auto"></audio>
-        <audio id="commentaryFemale" src="Woman.mp3" preload="auto"></audio>
+        <audio id="commentaryMale" src="man.mp3" preload="auto"></audio>
+        <audio id="commentaryFemale" src="woman.mp3" preload="auto"></audio>
+        <audio id="commentaryMaleV2" src="manv2.mp3" preload="auto"></audio>
+        <audio id="commentaryFemaleV2" src="womanv2.mp3" preload="auto"></audio>
       </a-assets>
 
       <!-- 360 video sphere -->
@@ -262,13 +264,24 @@
       const commentaryToggle = document.getElementById('commentaryToggle');
       const maleAudio = document.getElementById('commentaryMale');
       const femaleAudio = document.getElementById('commentaryFemale');
-      const commentaryTracks = {
+      const maleAudioV2 = document.getElementById('commentaryMaleV2');
+      const femaleAudioV2 = document.getElementById('commentaryFemaleV2');
+      
+      const commentaryTracksV1 = {
         male: maleAudio,
         female: femaleAudio,
       };
+      
+      const commentaryTracksV2 = {
+        male: maleAudioV2,
+        female: femaleAudioV2,
+      };
+      
+      let commentaryTracks = commentaryTracksV2; // Default to v2
 
       // Debug: Check if audio files are loading
-      Object.entries(commentaryTracks).forEach(([name, track]) => {
+      const allTracks = [...Object.entries(commentaryTracksV1), ...Object.entries(commentaryTracksV2)];
+      allTracks.forEach(([name, track]) => {
         track.addEventListener('loadeddata', () => {
           console.log(`${name} audio loaded successfully`);
         });
@@ -280,20 +293,44 @@
       // Video source switching
       const videoSelector = document.getElementById('videoSelector');
       const switchVideo = (src) => {
+        const wasPlaying = commentaryOn;
+        
+        // Stop current commentary
+        if (commentaryOn) {
+          stopAllCommentary();
+          commentaryOn = false;
+          commentaryToggle.textContent = '▶️ Play Commentary';
+          commentaryToggle.classList.remove('active');
+        }
+        
+        // Switch commentary tracks based on video
+        if (src === 'video360.mp4') {
+          commentaryTracks = commentaryTracksV1;
+        } else {
+          commentaryTracks = commentaryTracksV2;
+        }
+        
+        // Switch video
         video.pause();
         video.currentTime = 0;
         video.src = src;
         video.load();
-        // Keep enforced settings
         video.playbackRate = 1;
         video.play().catch(err => console.warn('Video play blocked:', err));
+        
+        // Resume commentary if it was playing
+        if (wasPlaying) {
+          setTimeout(() => {
+            startCommentary();
+          }, 500);
+        }
       };
 
       videoSelector.addEventListener('change', (e) => {
         switchVideo(e.target.value);
       });
 
-      Object.values(commentaryTracks).forEach(track => {
+      [...Object.values(commentaryTracksV1), ...Object.values(commentaryTracksV2)].forEach(track => {
         track.loop = true;
         track.playbackRate = 1;
         track.volume = 1.0;
@@ -306,7 +343,7 @@
       let commentaryOn = false;
 
       const stopAllCommentary = () => {
-        Object.values(commentaryTracks).forEach(track => {
+        [...Object.values(commentaryTracksV1), ...Object.values(commentaryTracksV2)].forEach(track => {
           track.pause();
           track.currentTime = 0;
         });
