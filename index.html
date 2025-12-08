@@ -347,27 +347,7 @@
         }
       });
 
-      // Auto-start commentary (default woman) once video begins playing
-      let autoPlayAttempted = false;
-      
-      const tryAutoStartCommentary = () => {
-        if (!commentaryOn && !autoPlayAttempted) {
-          autoPlayAttempted = true;
-          startCommentary();
-        }
-      };
-      
-      video.addEventListener('playing', tryAutoStartCommentary);
-      
-      // Ensure audio starts on first user interaction (mobile requirement)
-      const firstInteraction = () => {
-        tryAutoStartCommentary();
-        document.removeEventListener('click', firstInteraction);
-        document.removeEventListener('touchstart', firstInteraction);
-      };
-      
-      document.addEventListener('click', firstInteraction, { once: true });
-      document.addEventListener('touchstart', firstInteraction, { once: true });
+      // Commentary is now manual - user must click Play Commentary button to start
     </script>
 
   </body>
