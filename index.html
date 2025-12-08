@@ -182,27 +182,52 @@
       const unlockButton = document.getElementById('unlockButton');
 
       const unlockAudio = () => {
-        const promises = Object.values(commentaryTracks).map(track => 
-          track.play().then(() => {
+        console.log('Attempting to unlock audio...');
+        console.log('Available tracks:', Object.keys(commentaryTracks));
+        
+        const promises = Object.values(commentaryTracks).map(track => {
+          console.log('Track ready state:', track.readyState, 'src:', track.src);
+          return track.play().then(() => {
+            console.log('Track played successfully:', track.src);
             track.pause();
             track.currentTime = 0;
+            return true;
           }).catch(err => {
-            console.warn('Audio unlock failed:', err);
-          })
-        );
+            console.error('Audio unlock failed for', track.src, ':', err);
+            return false;
+          });
+        });
         
-        Promise.all(promises).then(() => {
-          audioUnlocked = true;
+        Promise.all(promises).then((results) => {
+          audioUnlocked = results.some(r => r === true);
+          console.log('Audio unlock results:', results, 'audioUnlocked:', audioUnlocked);
           audioPrompt.classList.add('hidden');
-          console.log('Audio unlocked successfully');
-          if (pendingAutoCommentary) {
-            pendingAutoCommentary = false;
-            startCommentary();
+          
+          if (audioUnlocked) {
+            console.log('Audio unlocked successfully');
+            if (pendingAutoCommentary) {
+              pendingAutoCommentary = false;
+              console.log('Starting pending commentary...');
+              startCommentary();
+            }
+          } else {
+            console.error('All audio tracks failed to unlock. Check file paths and browser console.');
+            alert('Audio files not found. Ensure man.mp3 and woman.mp3 are in the same directory as index.html');
           }
         });
       };
 
       unlockButton.addEventListener('click', unlockAudio);
+      
+      // Debug: Check if audio files are loading
+      Object.entries(commentaryTracks).forEach(([name, track]) => {
+        track.addEventListener('loadeddata', () => {
+          console.log(`${name} audio loaded successfully`);
+        });
+        track.addEventListener('error', (e) => {
+          console.error(`${name} audio error:`, e, 'src:', track.src);
+        });
+      });
 
       // Video source switching
       const videoSelector = document.getElementById('videoSelector');
