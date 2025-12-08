@@ -42,6 +42,43 @@
         gap: 8px;
         align-items: center;
       }
+
+      #audioPrompt {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.85);
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        color: white;
+        font-family: sans-serif;
+        text-align: center;
+        padding: 20px;
+      }
+
+      #audioPrompt button {
+        margin-top: 20px;
+        padding: 15px 30px;
+        font-size: 18px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      #audioPrompt button:hover {
+        background: #45a049;
+      }
+
+      .hidden {
+        display: none !important;
+      }
     </style>
   </head>
 
@@ -62,6 +99,13 @@
     <div id="commentaryControls">
       <button id="commentaryToggle">Play Commentary</button>
       <span style="font-size:12px; opacity:0.8;">Tone uses selected voice</span>
+    </div>
+
+    <!-- Audio unlock prompt -->
+    <div id="audioPrompt">
+      <h2>🔊 Enable Audio</h2>
+      <p>Tap to unlock audio and start commentary</p>
+      <button id="unlockButton">Enable Sound</button>
     </div>
 
     <!-- A-Frame VR Scene -->
@@ -134,29 +178,31 @@
       // Audio unlock handling for mobile (iOS/Android)
       let audioUnlocked = false;
       let pendingAutoCommentary = false;
+      const audioPrompt = document.getElementById('audioPrompt');
+      const unlockButton = document.getElementById('unlockButton');
 
       const unlockAudio = () => {
-        Object.values(commentaryTracks).forEach(track => {
+        const promises = Object.values(commentaryTracks).map(track => 
           track.play().then(() => {
             track.pause();
             track.currentTime = 0;
-            audioUnlocked = true;
-            if (pendingAutoCommentary) {
-              pendingAutoCommentary = false;
-              startCommentary();
-            }
-          }).catch(() => {
-            // ignore; user gesture might still fail if device muted
-          });
+          }).catch(err => {
+            console.warn('Audio unlock failed:', err);
+          })
+        );
+        
+        Promise.all(promises).then(() => {
+          audioUnlocked = true;
+          audioPrompt.classList.add('hidden');
+          console.log('Audio unlocked successfully');
+          if (pendingAutoCommentary) {
+            pendingAutoCommentary = false;
+            startCommentary();
+          }
         });
-        window.removeEventListener('touchstart', unlockAudio);
-        window.removeEventListener('pointerdown', unlockAudio);
-        window.removeEventListener('click', unlockAudio);
       };
 
-      window.addEventListener('touchstart', unlockAudio, { once: true });
-      window.addEventListener('pointerdown', unlockAudio, { once: true });
-      window.addEventListener('click', unlockAudio, { once: true });
+      unlockButton.addEventListener('click', unlockAudio);
 
       // Video source switching
       const videoSelector = document.getElementById('videoSelector');
@@ -177,6 +223,8 @@
       Object.values(commentaryTracks).forEach(track => {
         track.loop = true;
         track.playbackRate = 1;
+        track.volume = 1.0;
+        track.muted = false;
         track.addEventListener('ratechange', () => {
           if (track.playbackRate !== 1) track.playbackRate = 1;
         });
