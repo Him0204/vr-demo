@@ -16,6 +16,18 @@
         font-family: sans-serif;
       }
 
+      #videoSelector {
+        position: absolute;
+        top: 120px;
+        left: 20px;
+        z-index: 9999;
+        background: rgba(0,0,0,0.7);
+        padding: 8px 12px;
+        border-radius: 6px;
+        color: white;
+        font-family: sans-serif;
+      }
+
       #commentaryControls {
         position: absolute;
         top: 70px;
@@ -38,6 +50,12 @@
     <select id="toneSelector">
       <option value="female">Woman</option>
       <option value="male">Man</option>
+    </select>
+
+    <!-- Video source selector -->
+    <select id="videoSelector">
+      <option value="video360.mp4">Video 360 v1</option>
+      <option value="video360v2.mp4" selected>Video 360 v2</option>
     </select>
 
     <!-- Commentator voice controls -->
@@ -113,23 +131,48 @@
         female: femaleAudio,
       };
 
-      // iOS Safari needs a user gesture to unlock audio; prepare a once-only unlock
+      // Audio unlock handling for mobile (iOS/Android)
+      let audioUnlocked = false;
+      let pendingAutoCommentary = false;
+
       const unlockAudio = () => {
         Object.values(commentaryTracks).forEach(track => {
           track.play().then(() => {
             track.pause();
             track.currentTime = 0;
+            audioUnlocked = true;
+            if (pendingAutoCommentary) {
+              pendingAutoCommentary = false;
+              startCommentary();
+            }
           }).catch(() => {
             // ignore; user gesture might still fail if device muted
           });
         });
         window.removeEventListener('touchstart', unlockAudio);
+        window.removeEventListener('pointerdown', unlockAudio);
         window.removeEventListener('click', unlockAudio);
       };
 
       window.addEventListener('touchstart', unlockAudio, { once: true });
       window.addEventListener('pointerdown', unlockAudio, { once: true });
       window.addEventListener('click', unlockAudio, { once: true });
+
+      // Video source switching
+      const videoSelector = document.getElementById('videoSelector');
+      const switchVideo = (src) => {
+        video.pause();
+        video.currentTime = 0;
+        video.src = src;
+        video.load();
+        // Keep enforced settings
+        video.playbackRate = 1;
+        video.play().catch(err => console.warn('Video play blocked:', err));
+      };
+
+      videoSelector.addEventListener('change', (e) => {
+        switchVideo(e.target.value);
+      });
 
       Object.values(commentaryTracks).forEach(track => {
         track.loop = true;
@@ -160,7 +203,11 @@
       const startCommentary = () => {
         commentaryOn = true;
         commentaryToggle.textContent = 'Stop Commentary';
-        playSelectedCommentary();
+        if (audioUnlocked) {
+          playSelectedCommentary();
+        } else {
+          pendingAutoCommentary = true;
+        }
       };
 
       commentaryToggle.addEventListener('click', () => {
@@ -184,6 +231,14 @@
       video.addEventListener('playing', () => {
         if (!commentaryOn) {
           // Default tone is woman; will switch to man if selector is changed
+          startCommentary();
+        }
+      });
+
+      // If user taps after video already playing, ensure commentary starts once unlocked
+      document.body.addEventListener('pointerdown', () => {
+        if (pendingAutoCommentary && audioUnlocked) {
+          pendingAutoCommentary = false;
           startCommentary();
         }
       });
