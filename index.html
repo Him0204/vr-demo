@@ -15,6 +15,26 @@
         color: white;
         font-family: sans-serif;
       }
+
+      #commentaryControls {
+        position: absolute;
+        top: 70px;
+        left: 20px;
+        z-index: 9999;
+        background: rgba(0,0,0,0.7);
+        padding: 8px 12px;
+        border-radius: 6px;
+        color: white;
+        font-family: sans-serif;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      #commentaryControls label {
+        font-size: 12px;
+        opacity: 0.8;
+      }
     </style>
   </head>
 
@@ -25,6 +45,16 @@
       <option value="calm">🌙 Calm</option>
       <option value="analyst">📊 Analyst</option>
     </select>
+
+    <!-- Commentator voice controls -->
+    <div id="commentaryControls">
+      <label for="voiceSelector">Voice</label>
+      <select id="voiceSelector">
+        <option value="female">Woman</option>
+        <option value="male">Man</option>
+      </select>
+      <button id="commentaryToggle">Play Commentary</button>
+    </div>
 
     <!-- A-Frame VR Scene -->
     <a-scene>
@@ -50,6 +80,13 @@
 
       // Ensure video plays
       const video = document.getElementById('v360');
+      // Force normal playback speed in case the browser throttles or speeds it up
+      video.playbackRate = 1;
+      video.addEventListener('ratechange', () => {
+        if (video.playbackRate !== 1) {
+          video.playbackRate = 1;
+        }
+      });
       
       // Try to play video when scene is loaded
       document.querySelector('a-scene').addEventListener('loaded', () => {
@@ -72,6 +109,69 @@
       
       video.addEventListener('error', (e) => {
         console.error('Video error:', e);
+      });
+
+      // Commentator voice (man / woman) via Web Speech API
+      const voiceSelector = document.getElementById('voiceSelector');
+      const commentaryToggle = document.getElementById('commentaryToggle');
+      let availableVoices = [];
+      let commentaryOn = false;
+      let speakingUtterance = null;
+
+      const refreshVoices = () => {
+        availableVoices = window.speechSynthesis.getVoices();
+      };
+
+      refreshVoices();
+      window.speechSynthesis.onvoiceschanged = refreshVoices;
+
+      const pickVoice = (gender) => {
+        // Heuristic: prefer voice names that hint at gender, else fallback to first
+        const lower = gender.toLowerCase();
+        const prioritized = availableVoices.find(v => v.name.toLowerCase().includes(lower))
+          || availableVoices.find(v => v.name.toLowerCase().includes('female') && gender === 'female')
+          || availableVoices.find(v => v.name.toLowerCase().includes('male') && gender === 'male')
+          || availableVoices[0];
+        return prioritized || null;
+      };
+
+      const toneLines = {
+        hype: 'What a moment! The crowd is electric as the play unfolds!',
+        calm: 'Smooth and steady pace, every move measured and in control.',
+        analyst: 'Notice the positioning here: spacing is tight, timing is perfect.',
+      };
+
+      const speakCommentary = () => {
+        window.speechSynthesis.cancel();
+        speakingUtterance = new SpeechSynthesisUtterance();
+        const tone = document.getElementById('toneSelector').value;
+        speakingUtterance.text = toneLines[tone] || toneLines.hype;
+        speakingUtterance.rate = 1;
+        speakingUtterance.pitch = 1;
+        speakingUtterance.volume = 1;
+        const chosenVoice = pickVoice(voiceSelector.value);
+        if (chosenVoice) {
+          speakingUtterance.voice = chosenVoice;
+        }
+        window.speechSynthesis.speak(speakingUtterance);
+      };
+
+      commentaryToggle.addEventListener('click', () => {
+        commentaryOn = !commentaryOn;
+        if (commentaryOn) {
+          commentaryToggle.textContent = 'Stop Commentary';
+          speakCommentary();
+        } else {
+          commentaryToggle.textContent = 'Play Commentary';
+          window.speechSynthesis.cancel();
+        }
+      });
+
+      // Re-speak when a speech event ends while still toggled on
+      window.speechSynthesis.addEventListener('end', () => {
+        if (commentaryOn) {
+          speakCommentary();
+        }
       });
     </script>
 
