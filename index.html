@@ -69,6 +69,10 @@
 
       // Ensure video plays
       const video = document.getElementById('v360');
+      // Reinforce inline playback across mobile browsers
+      video.setAttribute('playsinline', 'true');
+      video.setAttribute('webkit-playsinline', 'true');
+      video.muted = true; // keep muted for autoplay policy
       // Force normal playback speed in case the browser throttles or speeds it up
       video.playbackRate = 1;
       video.addEventListener('ratechange', () => {
@@ -108,6 +112,24 @@
         male: maleAudio,
         female: femaleAudio,
       };
+
+      // iOS Safari needs a user gesture to unlock audio; prepare a once-only unlock
+      const unlockAudio = () => {
+        Object.values(commentaryTracks).forEach(track => {
+          track.play().then(() => {
+            track.pause();
+            track.currentTime = 0;
+          }).catch(() => {
+            // ignore; user gesture might still fail if device muted
+          });
+        });
+        window.removeEventListener('touchstart', unlockAudio);
+        window.removeEventListener('click', unlockAudio);
+      };
+
+      window.addEventListener('touchstart', unlockAudio, { once: true });
+      window.addEventListener('pointerdown', unlockAudio, { once: true });
+      window.addEventListener('click', unlockAudio, { once: true });
 
       Object.values(commentaryTracks).forEach(track => {
         track.loop = true;
