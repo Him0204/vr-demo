@@ -135,6 +135,12 @@
         }
       };
 
+      const startCommentary = () => {
+        commentaryOn = true;
+        commentaryToggle.textContent = 'Stop Commentary';
+        playSelectedCommentary();
+      };
+
       commentaryToggle.addEventListener('click', () => {
         commentaryOn = !commentaryOn;
         if (commentaryOn) {
@@ -149,6 +155,14 @@
       toneSelector.addEventListener('change', () => {
         if (commentaryOn) {
           playSelectedCommentary();
+        }
+      });
+
+      // Auto-start commentary (default woman) once video begins playing
+      video.addEventListener('playing', () => {
+        if (!commentaryOn) {
+          // Default tone is woman; will switch to man if selector is changed
+          startCommentary();
         }
       });
     </script>
